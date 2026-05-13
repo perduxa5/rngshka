@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>🎁 Gift RNG</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.x/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#0f0f13;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.app{width:100%;max-width:420px;min-height:100vh;background:#1a1a24;display:flex;flex-direction:column;position:relative}
+
+/* Header */
+.hdr{padding:12px 16px 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #2a2a38;background:#1a1a24;position:sticky;top:0;z-index:10}
+.hdr-title{font-size:17px;font-weight:600;color:#fff}
+.pills{display:flex;gap:6px}
+.pill{display:flex;align-items:center;gap:4px;background:#252535;padding:5px 9px;border-radius:10px;font-size:12px;font-weight:600;color:#e0e0e0;border:1px solid #2f2f45}
+
+/* Content */
+.content{flex:1;padding:16px;overflow-y:auto}
+
+/* Nav */
+.nav{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #2a2a38;background:#1a1a24;position:sticky;bottom:0}
+.nav-btn{background:none;border:none;padding:10px 0 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-size:10px;font-family:inherit;color:#666;border-top:2px solid transparent;transition:color 0.15s}
+.nav-btn.active{color:#4da6ff;border-top-color:#4da6ff}
+.nav-btn .ti{font-size:20px}
+
+/* === SPIN TAB === */
+.spin-main{display:flex;flex-direction:column;align-items:center;gap:14px}
+.cube-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.cube-card{background:#252535;border-radius:12px;padding:10px 12px;border:1px solid #2f2f45;transition:border-color 0.3s}
+.cube-card.flash-gold{border-color:#f59e0b;box-shadow:0 0 10px rgba(245,158,11,0.3)}
+.cube-card.flash-diam{border-color:#4da6ff;box-shadow:0 0 10px rgba(77,166,255,0.3)}
+.cube-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:11px;color:#888}
+.cube-bonus{font-size:11px;font-weight:700}
+.prog-track{height:5px;background:#2f2f45;border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width 0.3s}
+.cube-count{font-size:10px;color:#555;text-align:right;margin-top:4px}
+
+.gift-circle{border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:border-color 0.3s,background 0.3s;border:3px solid #2f2f45;background:#252535;width:140px;height:140px;flex-shrink:0}
+.gift-circle .g-emoji{font-size:54px;line-height:1;transition:none}
+.gift-circle .g-odds{font-size:10px;font-weight:600;margin-top:2px}
+.gift-circle.anim{animation:spinBounce 0.45s ease}
+
+.gift-label{text-align:center}
+.gift-label .g-name{font-size:16px;font-weight:600;color:#fff;margin-bottom:4px}
+.rarity-badge{display:inline-block;font-size:11px;padding:3px 12px;border-radius:20px;font-weight:600}
+
+.spin-btn{width:100%;padding:15px;font-size:16px;font-weight:700;border:none;border-radius:14px;cursor:pointer;font-family:inherit;transition:all 0.2s;letter-spacing:0.3px}
+.spin-btn.ready{background:linear-gradient(135deg,#3b82f6,#4da6ff);color:#fff;box-shadow:0 4px 15px rgba(77,166,255,0.3)}
+.spin-btn.ready:active{transform:scale(0.97)}
+.spin-btn.busy{background:#252535;color:#555;cursor:default}
+.spin-btn.gold{background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;animation:goldPulse 0.8s infinite}
+.spin-btn.diamond{background:linear-gradient(135deg,#1d4ed8,#4da6ff);color:#fff;animation:diamPulse 0.8s infinite}
+
+.ctrl-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.ctrl-btn{padding:11px;border:1px solid #2f2f45;background:#252535;color:#ccc;font-size:13px;font-weight:600;font-family:inherit;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s}
+.ctrl-btn:active{transform:scale(0.97)}
+.ctrl-btn.auto-on{border-color:#4CAF50;background:#1a3320;color:#4CAF50}
+.ctrl-btn.locked{color:#444;cursor:default}
+
+/* === UPGRADES === */
+.upg-section{margin-bottom:18px}
+.upg-head{font-size:13px;font-weight:700;margin-bottom:10px;padding-left:2px}
+.upg-item{display:flex;align-items:center;gap:10px;background:#252535;border-radius:12px;padding:12px 13px;border:1px solid #2f2f45;margin-bottom:8px}
+.upg-info{flex:1}
+.upg-name-row{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.upg-name{font-size:13px;font-weight:600;color:#e0e0e0}
+.dots{display:flex;gap:3px}
+.dot{width:7px;height:7px;border-radius:50%;background:#2f2f45;transition:background 0.2s}
+.upg-desc{font-size:11px;color:#666}
+.upg-buy{border-radius:10px;padding:7px 11px;font-size:11px;font-weight:700;font-family:inherit;border:none;min-width:68px;cursor:pointer;transition:all 0.15s}
+.upg-buy:active{transform:scale(0.96)}
+.upg-buy:disabled{cursor:default}
+
+/* === BATTLE === */
+.battle-main{display:flex;flex-direction:column;gap:12px}
+.battle-info-text{font-size:13px;color:#666}
+.battle-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.battle-card{background:#252535;border:1px solid #2f2f45;border-radius:12px;padding:11px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all 0.15s;font-family:inherit;text-align:left}
+.battle-card:active{transform:scale(0.97)}
+.battle-card.sel{border-width:2px}
+.b-emoji{font-size:28px}
+.b-name{font-size:12px;font-weight:600;color:#e0e0e0}
+.b-rarity{font-size:10px;margin-top:1px}
+.b-cnt{font-size:10px;color:#555;margin-top:1px}
+.fight-btn{width:100%;padding:14px;font-size:15px;font-weight:700;border:none;border-radius:14px;font-family:inherit;cursor:pointer;transition:all 0.2s}
+.fight-btn.ready{background:linear-gradient(135deg,#dc2626,#f87171);color:#fff;box-shadow:0 4px 15px rgba(220,38,38,0.3)}
+.fight-btn.ready:active{transform:scale(0.97)}
+.fight-btn.busy{background:#252535;color:#555;cursor:default;animation:pulseAnim 0.8s infinite}
+.result-box{border-radius:14px;padding:16px;text-align:center;border:2px solid}
+.result-box.win{background:#0d2e1a;border-color:#4CAF50}
+.result-box.lose{background:#2e0d0d;border-color:#f44336}
+.r-icon{font-size:30px}
+.r-title{font-size:16px;font-weight:700;margin-top:5px}
+.r-sub{font-size:13px;margin-top:3px}
+
+/* === BACKPACK === */
+.bp-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.bp-title{font-size:14px;font-weight:600;color:#fff}
+.bp-count{font-size:12px;color:#555}
+.bp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bp-card{border-radius:12px;padding:12px 8px;text-align:center;position:relative;border:1px solid #2f2f45;background:#252535;transition:all 0.2s}
+.bp-card.unlocked{border-color:var(--rc)}
+.bp-badge{position:absolute;top:5px;right:5px;border-radius:50%;width:18px;height:18px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;color:#fff}
+.bp-emoji{font-size:30px;line-height:1}
+.bp-name{font-size:9px;font-weight:600;margin-top:5px}
+.bp-sub{font-size:9px;color:#555;margin-top:2px}
+.empty-msg{text-align:center;color:#555;padding:28px 0;font-size:14px}
+
+/* Animations */
+@keyframes spinBounce{0%{transform:scale(1) rotate(0deg)}30%{transform:scale(0.65) rotate(-25deg)}65%{transform:scale(1.25) rotate(12deg)}100%{transform:scale(1) rotate(0deg)}}
+@keyframes pulseAnim{0%,100%{opacity:1}50%{opacity:0.5}}
+@keyframes goldPulse{0%,100%{box-shadow:0 4px 15px rgba(245,158,11,0.4)}50%{box-shadow:0 4px 25px rgba(245,158,11,0.7)}}
+@keyframes diamPulse{0%,100%{box-shadow:0 4px 15px rgba(77,166,255,0.4)}50%{box-shadow:0 4px 25px rgba(77,166,255,0.7)}}
+@keyframes popIn{0%{transform:scale(0.5);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hdr">
+    <span class="hdr-title">🎁 Gift RNG</span>
+    <div class="pills">
+      <div class="pill"><i class="ti ti-coin" style="color:#f59e0b;font-size:14px"></i><span id="c-coins">50</span></div>
+      <div class="pill"><i class="ti ti-sparkles" style="color:#b06fff;font-size:14px"></i><span id="c-luck">×1.00</span></div>
+      <div class="pill"><i class="ti ti-reload" style="color:#666;font-size:14px"></i><span id="c-spins">0</span></div>
+    </div>
+  </div>
+  <div class="content" id="content"></div>
+  <div class="nav">
+    <button class="nav-btn active" id="nav-spin"     onclick="setTab('spin')">    <i class="ti ti-dice"></i>Крутить</button>
+    <button class="nav-btn"        id="nav-upgrades" onclick="setTab('upgrades')"><i class="ti ti-arrow-up-circle"></i>Апгрейды</button>
+    <button class="nav-btn"        id="nav-battle"   onclick="setTab('battle')">  <i class="ti ti-sword"></i>Бой</button>
+    <button class="nav-btn"        id="nav-backpack" onclick="setTab('backpack')"><i class="ti ti-backpack"></i>Рюкзак</button>
+  </div>
+</div>
+
+<script>
+const GIFTS=[
+  {id:"cake",    name:"Торт",          emoji:"🎂",rarity:"Common",    rarityRu:"Обычный",    chance:0.25,oddsLabel:"1/4"},
+  {id:"balloon", name:"Шарик",         emoji:"🎈",rarity:"Common",    rarityRu:"Обычный",    chance:0.20,oddsLabel:"1/5"},
+  {id:"candle",  name:"Свеча",         emoji:"🕯️",rarity:"Common",    rarityRu:"Обычный",    chance:0.15,oddsLabel:"1/7"},
+  {id:"star",    name:"Звезда",        emoji:"⭐", rarity:"Uncommon",  rarityRu:"Необычный",  chance:0.15,oddsLabel:"1/7"},
+  {id:"crystal", name:"Кристалл",      emoji:"🔮",rarity:"Uncommon",  rarityRu:"Необычный",  chance:0.10,oddsLabel:"1/10"},
+  {id:"heart",   name:"Сердечко",      emoji:"❤️",rarity:"Rare",      rarityRu:"Редкий",     chance:0.06,oddsLabel:"1/17"},
+  {id:"peach",   name:"Персик",        emoji:"🍑",rarity:"Rare",      rarityRu:"Редкий",     chance:0.04,oddsLabel:"1/25"},
+  {id:"cap",     name:"Кепка Дурова",  emoji:"🎓",rarity:"Epic",      rarityRu:"Эпический",  chance:0.025,oddsLabel:"1/40"},
+  {id:"nazar",   name:"Назар",         emoji:"🧿",rarity:"Epic",      rarityRu:"Эпический",  chance:0.015,oddsLabel:"1/67"},
+  {id:"diamond", name:"Кольцо",        emoji:"💎",rarity:"Legendary", rarityRu:"Легендарный",chance:0.008,oddsLabel:"1/125"},
+  {id:"goldstar",name:"Голд. Звезда",  emoji:"🌟",rarity:"Legendary", rarityRu:"Легендарный",chance:0.002,oddsLabel:"1/500"},
+];
+
+const RARITY={
+  Common:   {border:"#4CAF50",bg:"#1a2e1a",text:"#66bb6a"},
+  Uncommon: {border:"#2196F3",bg:"#0d1e2e",text:"#42a5f5"},
+  Rare:     {border:"#9C27B0",bg:"#1e0d2e",text:"#ab47bc"},
+  Epic:     {border:"#FF9800",bg:"#2e1a00",text:"#ffa726"},
+  Legendary:{border:"#f44336",bg:"#2e0d0d",text:"#ef5350"},
+};
+
+const UPGRADES=[
+  {id:"luck1",   branch:"luck", name:"Удача I",      desc:"×1.1 к шансам",              baseCost:100, maxLevel:5},
+  {id:"luck2",   branch:"luck", name:"Удача II",     desc:"×1.25 к шансам",             baseCost:500, maxLevel:3},
+  {id:"golddice",branch:"luck", name:"Золотой куб",  desc:"×2 удача каждые N спинов",   baseCost:300, maxLevel:5},
+  {id:"diamonddice",branch:"luck",name:"Алмазный куб",desc:"×4 удача каждые N спинов", baseCost:1000,maxLevel:3},
+  {id:"autoupg", branch:"speed",name:"Авто-спин",    desc:"Спин без нажатия",           baseCost:200, maxLevel:1},
+  {id:"speed1",  branch:"speed",name:"Скорость",     desc:"Авто-спин быстрее",          baseCost:400, maxLevel:3},
+  {id:"coins1",  branch:"speed",name:"Монеты I",     desc:"+50% монет с боёв",          baseCost:250, maxLevel:5},
+  {id:"coins2",  branch:"speed",name:"Монеты II",    desc:"×2 монет с боёв",            baseCost:800, maxLevel:3},
+];
+
+let S={
+  coins:50, totalSpins:0, luckMult:1,
+  goldCount:0, diamCount:0,
+  collection:{}, lastGift:null,
+  isSpinning:false, autoSpin:false, bonusFlash:null,
+  upgLevels:{}, upgCosts:Object.fromEntries(UPGRADES.map(u=>[u.id,u.baseCost])),
+  battleTeam:[], battleResult:null, battling:false,
+  tab:"spin",
+};
+let autoTimer=null;
+
+const goldInt=()=>Math.max(3,10-(S.upgLevels["golddice"]||0));
+const diamInt=()=>Math.max(5,20-(S.upgLevels["diamonddice"]||0)*3);
+const autoSpd=()=>Math.max(300,800-(S.upgLevels["speed1"]||0)*180);
+const coinBonus=()=>1+(S.upgLevels["coins1"]||0)*0.5+(S.upgLevels["coins2"]||0);
+const hasAuto=()=>(S.upgLevels["autoupg"]||0)>=1;
+
+function rollGift(mult){
+  const adj=GIFTS.map(g=>({...g,w:Math.min(g.chance*mult,1)}));
+  const tot=adj.reduce((s,g)=>s+g.w,0);
+  let r=Math.random()*tot;
+  for(const g of adj){r-=g.w;if(r<=0)return g;}
+  return GIFTS[0];
+}
+
+function doSpin(){
+  if(S.isSpinning)return;
+  S.isSpinning=true;
+  const ng=S.goldCount+1, nd=S.diamCount+1;
+  let mult=S.luckMult;
+  S.bonusFlash=null;
+  if(nd%diamInt()===0){mult*=4;S.bonusFlash="diamond";}
+  else if(ng%goldInt()===0){mult*=2;S.bonusFlash="gold";}
+
+  const circle=document.getElementById("gift-circle");
+  if(circle){circle.style.animation="none";void circle.offsetWidth;circle.style.animation="spinBounce 0.45s ease";}
+
+  renderSpin();
+
+  setTimeout(()=>{
+    const gift=rollGift(mult);
+    S.lastGift=gift;
+    S.collection[gift.id]=(S.collection[gift.id]||0)+1;
+    S.totalSpins++;
+    S.goldCount++;
+    S.diamCount++;
+    S.isSpinning=false;
+    S.bonusFlash=null;
+    renderHdr();
+    if(S.tab==="spin")renderSpin();
+    scheduleAuto();
+    // haptic if in Telegram
+    if(window.Telegram&&window.Telegram.WebApp)window.Telegram.WebApp.HapticFeedback.impactOccurred("medium");
+  },450);
+}
+
+function scheduleAuto(){
+  clearTimeout(autoTimer);
+  if(S.autoSpin&&hasAuto()&&!S.isSpinning)autoTimer=setTimeout(doSpin,autoSpd());
+}
+
+function setTab(t){
+  S.tab=t;
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("nav-"+t).classList.add("active");
+  render();
+}
+
+function renderHdr(){
+  document.getElementById("c-coins").textContent=S.coins;
+  document.getElementById("c-luck").textContent="×"+S.luckMult.toFixed(2);
+  document.getElementById("c-spins").textContent=S.totalSpins;
+}
+
+function render(){
+  if(S.tab==="spin")renderSpin();
+  else if(S.tab==="upgrades")renderUpgrades();
+  else if(S.tab==="battle")renderBattle();
+  else renderBackpack();
+}
+
+/* ---- SPIN ---- */
+function renderSpin(){
+  const el=document.getElementById("content");
+  const g=S.lastGift, r=g?RARITY[g.rarity]:null;
+  const gp=S.goldCount%goldInt(), dp=S.diamCount%diamInt();
+  const gFlash=S.bonusFlash==="gold", dFlash=S.bonusFlash==="diamond";
+
+  let btnClass="spin-btn ", btnTxt="🎲 Крутить";
+  if(S.isSpinning){btnClass+="busy";btnTxt="⏳ Крутим...";}
+  else if(S.bonusFlash==="diamond"){btnClass+="diamond";btnTxt="💎 УДАЧА ×4!";}
+  else if(S.bonusFlash==="gold"){btnClass+="gold";btnTxt="🟡 УДАЧА ×2!";}
+  else btnClass+="ready";
+
+  el.innerHTML=`<div class="spin-main">
+    <div class="cube-row">
+      <div class="cube-card${gFlash?" flash-gold":""}">
+        <div class="cube-top"><span>Золотой куб</span><span class="cube-bonus" style="color:#f59e0b">×2</span></div>
+        <div class="prog-track"><div class="prog-fill" style="width:${Math.round(gp/goldInt()*100)}%;background:#f59e0b"></div></div>
+        <div class="cube-count">${gp}/${goldInt()}</div>
+      </div>
+      <div class="cube-card${dFlash?" flash-diam":""}">
+        <div class="cube-top"><span>Алмазный куб</span><span class="cube-bonus" style="color:#4da6ff">×4</span></div>
+        <div class="prog-track"><div class="prog-fill" style="width:${Math.round(dp/diamInt()*100)}%;background:#4da6ff"></div></div>
+        <div class="cube-count">${dp}/${diamInt()}</div>
+      </div>
+    </div>
+    <div id="gift-circle" class="gift-circle" style="border-color:${r?r.border:"#2f2f45"};background:${r?r.bg:"#252535"}">
+      <span class="g-emoji">${g?g.emoji:"🎁"}</span>
+      ${g?`<span class="g-odds" style="color:${r.text}">${g.oddsLabel}</span>`:""}
+    </div>
+    ${g
+      ?`<div class="gift-label"><div class="g-name">${g.name}</div><span class="rarity-badge" style="background:${r.bg};color:${r.text};border:1px solid ${r.border}">${g.rarityRu}</span></div>`
+      :`<div style="font-size:13px;color:#555">Нажми и попытай удачу!</div>`
+    }
+    <button class="${btnClass}" onclick="doSpin()" ${S.isSpinning?"disabled":""}>${btnTxt}</button>
+    <div class="ctrl-row">
+      <button class="ctrl-btn${S.autoSpin&&hasAuto()?" auto-on":!hasAuto()?" locked":""}" onclick="toggleAuto()">
+        <i class="ti ti-player-play" style="font-size:15px"></i>
+        ${S.autoSpin&&hasAuto()?"Стоп авто":hasAuto()?"Авто-спин":"Авто 🔒"}
+      </button>
+      <button class="ctrl-btn" onclick="alert('Спины в фоне — будет в финальной версии!')">
+        <i class="ti ti-minimize" style="font-size:15px"></i>
+        Свернуть
+      </button>
+    </div>
+  </div>`;
+}
+
+function toggleAuto(){
+  if(!hasAuto())return;
+  S.autoSpin=!S.autoSpin;
+  renderSpin();
+  scheduleAuto();
+}
+
+/* ---- UPGRADES ---- */
+function renderUpgrades(){
+  const el=document.getElementById("content");
+  const branches=[
+    {id:"luck", label:"🍀 Удача",    color:"#b06fff"},
+    {id:"speed",label:"⚡ Скорость", color:"#ffa726"},
+  ];
+  let html="";
+  for(const branch of branches){
+    html+=`<div class="upg-section"><div class="upg-head" style="color:${branch.color}">${branch.label}</div>`;
+    for(const upg of UPGRADES.filter(u=>u.branch===branch.id)){
+      const lvl=S.upgLevels[upg.id]||0, cost=S.upgCosts[upg.id];
+      const maxed=lvl>=upg.maxLevel, canAfford=S.coins>=cost;
+      const dots=Array.from({length:upg.maxLevel},(_,i)=>`<div class="dot" style="background:${i<lvl?branch.color:"#2f2f45"}"></div>`).join("");
+      const buyBg=maxed?"#252535":canAfford?branch.color:"#252535";
+      const buyCl=maxed?"#444":canAfford?"#fff":"#444";
+      html+=`<div class="upg-item">
+        <div class="upg-info">
+          <div class="upg-name-row"><span class="upg-name">${upg.name}</span><div class="dots">${dots}</div></div>
+          <div class="upg-desc">${upg.desc}</div>
+        </div>
+        <button class="upg-buy" onclick="buyUpg('${upg.id}')" ${maxed||!canAfford?"disabled":""}
+          style="background:${buyBg};color:${buyCl};cursor:${maxed||!canAfford?"default":"pointer"}">
+          ${maxed?"Макс":"🪙 "+cost}
+        </button>
+      </div>`;
+    }
+    html+="</div>";
+  }
+  el.innerHTML=html;
+}
+
+function buyUpg(id){
+  const upg=UPGRADES.find(u=>u.id===id);
+  const lvl=S.upgLevels[id]||0, cost=S.upgCosts[id];
+  if(S.coins<cost||lvl>=upg.maxLevel)return;
+  S.coins-=cost;
+  S.upgLevels[id]=lvl+1;
+  S.upgCosts[id]=Math.floor(cost*2.2);
+  if(id==="luck1")S.luckMult=parseFloat((S.luckMult*1.1).toFixed(3));
+  if(id==="luck2")S.luckMult=parseFloat((S.luckMult*1.25).toFixed(3));
+  renderHdr();
+  renderUpgrades();
+}
+
+/* ---- BATTLE ---- */
+function renderBattle(){
+  const el=document.getElementById("content");
+  const col=Object.keys(S.collection).map(id=>GIFTS.find(g=>g.id===id)).filter(Boolean);
+  let cardsHtml=col.length
+    ?`<div class="battle-grid">${col.map(g=>{
+        const sel=S.battleTeam.includes(g.id), r=RARITY[g.rarity];
+        return `<button class="battle-card${sel?" sel":""}" onclick="toggleBattle('${g.id}')"
+          style="${sel?`border-color:${r.border};background:${r.bg}`:""}">
+          <span class="b-emoji">${g.emoji}</span>
+          <div><div class="b-name">${g.name}</div><div class="b-rarity" style="color:${r.text}">${g.rarityRu}</div><div class="b-cnt">×${S.collection[g.id]||0}</div></div>
+        </button>`;}).join("")}</div>`
+    :`<div class="empty-msg">Сначала покрути спин и получи подарки!</div>`;
+
+  const fightHtml=S.battleTeam.length
+    ?`<button class="fight-btn ${S.battling?"busy":"ready"}" onclick="doBattle()" ${S.battling?"disabled":""}>
+        ${S.battling?"⚔️ Идёт бой...":"⚔️ В бой! ("+S.battleTeam.length+" подарка)"}
+      </button>`:"";
+
+  let resHtml="";
+  if(S.battleResult){
+    const res=S.battleResult;
+    resHtml=`<div class="result-box ${res.win?"win":"lose"}">
+      <div class="r-icon">${res.win?"🏆":"💀"}</div>
+      <div class="r-title" style="color:${res.win?"#4CAF50":"#f44336"}">${res.win?"Победа!":"Поражение"}</div>
+      <div class="r-sub" style="color:${res.win?"#66bb6a":"#ef5350"}">${res.win?"+"+res.reward+" монет":"+"+res.reward+" монет утешения"}</div>
+    </div>`;
+  }
+
+  el.innerHTML=`<div class="battle-main">
+    <div class="battle-info-text">Выбери до 3 подарков в команду:</div>
+    ${cardsHtml}${fightHtml}${resHtml}
+  </div>`;
+}
+
+function toggleBattle(id){
+  const i=S.battleTeam.indexOf(id);
+  if(i>=0)S.battleTeam.splice(i,1);
+  else if(S.battleTeam.length<3)S.battleTeam.push(id);
+  S.battleResult=null;
+  renderBattle();
+}
+
+function doBattle(){
+  if(!S.battleTeam.length||S.battling)return;
+  S.battling=true;
+  renderBattle();
+  setTimeout(()=>{
+    const pow=S.battleTeam.reduce((s,id)=>{
+      const g=GIFTS.find(x=>x.id===id);
+      return s+({Common:1,Uncommon:2,Rare:5,Epic:12,Legendary:30}[g.rarity]||1);
+    },0);
+    const win=Math.random()<Math.min(0.85,0.35+pow/60);
+    const reward=Math.floor((win?pow*12:pow*2)*coinBonus());
+    if(win)S.coins+=reward;
+    S.battleResult={win,reward};
+    S.battling=false;
+    renderHdr();
+    renderBattle();
+  },1400);
+}
+
+/* ---- BACKPACK ---- */
+function renderBackpack(){
+  const el=document.getElementById("content");
+  const unlocked=Object.keys(S.collection).length;
+  const cards=GIFTS.map(g=>{
+    const cnt=S.collection[g.id]||0, has=cnt>0, r=RARITY[g.rarity];
+    return `<div class="bp-card${has?" unlocked":""}" style="${has?`--rc:${r.border};background:${r.bg};border-color:${r.border}`:"opacity:0.4"}">
+      ${cnt>1?`<div class="bp-badge" style="background:${r.border}">${cnt>99?"99+":cnt}</div>`:""}
+      <div class="bp-emoji">${has?g.emoji:"❓"}</div>
+      <div class="bp-name" style="color:${has?r.text:"#555"}">${g.name}</div>
+      <div class="bp-sub">${has?g.rarityRu:g.oddsLabel}</div>
+    </div>`;
+  }).join("");
+  el.innerHTML=`<div class="bp-hdr"><span class="bp-title">Подарки</span><span class="bp-count">${unlocked}/${GIFTS.length} открыто</span></div>
+  <div class="bp-grid">${cards}</div>`;
+}
+
+// Init
+render();
+
+// Telegram WebApp init if available
+if(window.Telegram&&window.Telegram.WebApp){
+  window.Telegram.WebApp.ready();
+  window.Telegram.WebApp.expand();
+}
+</script>
+</body>
+</html>
